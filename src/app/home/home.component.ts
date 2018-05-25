@@ -1,6 +1,6 @@
-﻿/* 
-*  Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license. 
-*  See LICENSE in the source repository root for complete license information. 
+﻿/*
+*  Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license.
+*  See LICENSE in the source repository root for complete license information.
 */
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
@@ -9,6 +9,8 @@ import { Subscription } from 'rxjs/Subscription';
 import * as MicrosoftGraph from "@microsoft/microsoft-graph-types"
 import { HomeService } from './home.service';
 import { AuthService } from '../auth/auth.service';
+import {Observable} from 'rxjs/Observable';
+import {PromiseObservable} from 'rxjs/observable/PromiseObservable';
 
 @Component({
   selector: 'app-home',
@@ -26,6 +28,9 @@ import { AuthService } from '../auth/auth.service';
     <div class="ms-Grid-col ms-u-mdPush1 ms-u-md9 ms-u-lgPush1 ms-u-lg6">
     <div>
       <h2 *ngIf="me" class="ms-font-xxl ms-fontWeight-semibold">Hi, {{ me.displayName }}!</h2>
+
+
+
       <p class="ms-font-xl">You're now connected to Microsoft Graph. Click the button below to send a message from your account using the Microsoft Graph API. </p>
       <div *ngIf="me" class="ms-TextField">
         <input value="{{me.mail || me.userPrincipalName}}" class="ms-TextField-field">
@@ -33,6 +38,19 @@ import { AuthService } from '../auth/auth.service';
       <button class="ms-Button" (click)="onSendMail()">
         <span class="ms-Button-label">Send mail</span>
       </button>
+
+      <button class="ms-Button" (click)="onGetInfo()">
+        <span class="ms-Button-label">On Get Info</span>
+      </button>
+
+      <p>
+        Choose File to Upload to oneDrive and we can give you a view link for that file then.
+        <input type="file" (change)="onFileChange($event)">
+        <br>
+      </p>
+
+      <h2 *ngIf="file" class="ms-font-xxl ms-fontWeight-semibold">File url is: <a href="{{ file.webUrl }}">{{ file.webUrl }}</a></h2>
+
       <div *ngIf="this.emailSent">
         <p class="ms-font-m ms-fontColor-green">Successfully sent an email to {{ me.mail || me.userPrincipalName }}!</p>
       </div>
@@ -47,6 +65,8 @@ import { AuthService } from '../auth/auth.service';
 export class HomeComponent implements OnInit, OnDestroy {
   events: MicrosoftGraph.Event[];
   me: MicrosoftGraph.User;
+  file: MicrosoftGraph.File;
+  subsGetFile: Subscription;
   message: MicrosoftGraph.Message;
   emailSent: Boolean;
   subsGetUsers: Subscription;
@@ -59,7 +79,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    this.subsGetMe = this.homeService.getMe().subscribe(me => this.me = me);
+    this.subsGetMe = this.homeService.getMe().subscribe(
+      me => this.me = me);
   }
 
   ngOnDestroy() {
@@ -82,6 +103,16 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
     this.subsSendMail = this.homeService.sendMail(this.message).subscribe();
     this.emailSent = true;
+  }
+
+  onGetInfo() {
+    this.homeService.getMeInfo();
+  }
+
+  onFileChange(event: any) {
+
+    this.subsGetFile = this.homeService.onFileChange(event.target.files[0]).subscribe(
+      file => this.file = file);
   }
 
   onLogout() {

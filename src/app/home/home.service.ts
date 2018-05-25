@@ -1,6 +1,6 @@
-﻿/* 
-*  Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license. 
-*  See LICENSE in the source repository root for complete license information. 
+﻿/*
+*  Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license.
+*  See LICENSE in the source repository root for complete license information.
 */
 
 import 'rxjs/add/operator/catch';
@@ -11,7 +11,6 @@ import * as MicrosoftGraphClient from "@microsoft/microsoft-graph-client"
 import { Injectable } from '@angular/core';
 import { Http } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
-
 import { HttpService } from '../shared/http.service';
 
 @Injectable()
@@ -43,18 +42,56 @@ export class HomeService {
     .select("displayName, mail, userPrincipalName")
     .get()
     .then ((res => {
+      console.log('res is: ' + res.toString());
       return res;
     } ) )
     );
   }
+
+  getMeInfo()
+  {
+    var client = this.getClient();
+    // Example calling /me with no parameters
+    client
+    .api('/me')
+    .get((err, res) => {
+      console.log(res); // prints info about authenticated user
+      return res;
+    });
+
+  }
+
 
   sendMail(mail: MicrosoftGraph.Message) {
     var client = this.getClient();
     return Observable.fromPromise(client
     .api('me/sendmail')
     .post({message: mail})
-  );
-  } 
+   );
+  }
+
+
+  onFileChange(file: File): Observable<any>
+  {
+
+    var client = this.getClient();
+
+    return Observable.fromPromise(client
+      .api('/me/drive/root/children/' + file.name + '.docx/content')
+      .put(file)
+      .then((res) => {
+
+        console.log('uploadedValue is working');
+        console.log(res);
+        return res;
+
+      }).catch((err) => {
+        console.log('something went wrong');
+      console.log(err);
+        return err;
+    }));
+
+  }
 
 
 }
